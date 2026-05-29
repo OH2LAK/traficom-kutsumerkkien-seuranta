@@ -266,8 +266,14 @@ async function loadCharts(days, view) {
   chartDelta = new Chart(document.getElementById('chartDelta'), {
     type: 'bar',
     data: { labels, datasets: [
-      { label:'Lisätyt',   data:added,   backgroundColor:'rgba(45,255,176,.55)', borderWidth:0, borderRadius:2 },
-      { label:'Poistetut', data:removed, backgroundColor:'rgba(255,85,114,.55)', borderWidth:0, borderRadius:2 }
+      { label:'Lisätyt',   data:added,
+        backgroundColor:'rgba(45,255,176,.55)', borderWidth:0,
+        borderRadius:{ topLeft:2, topRight:2, bottomLeft:0, bottomRight:0 },
+        stack:'same', barPercentage:0.8, categoryPercentage:0.9 },
+      { label:'Poistetut', data:removed,
+        backgroundColor:'rgba(255,85,114,.55)', borderWidth:0,
+        borderRadius:{ topLeft:0, topRight:0, bottomLeft:2, bottomRight:2 },
+        stack:'same', barPercentage:0.8, categoryPercentage:0.9 }
     ]},
     options: {
       responsive:true, maintainAspectRatio:false,
@@ -277,8 +283,8 @@ async function loadCharts(days, view) {
           callbacks:{ label: ctx => ctx.dataset.label + ': ' + Math.abs(ctx.raw) } }
       },
       scales:{
-        x:{ grid:{color:'#1e2e40'}, ticks:{maxTicksLimit:10} },
-        y:{ grid:{color:'#1e2e40'}, ticks:{callback:v=>Math.abs(v)} }
+        x:{ grid:{color:'#1e2e40'}, ticks:{maxTicksLimit:10}, stacked:true },
+        y:{ grid:{color:'#1e2e40'}, ticks:{ callback: v => Math.abs(v) }, stacked:false }
       }
     }
   });
@@ -323,7 +329,7 @@ const CAT_LABEL = {
 
 async function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
-  if (!q) return;
+  if (!q || q.length < 3 || q.length > 12) return;
   const box = document.getElementById('searchResult');
   box.className = 'search-result visible';
   box.innerHTML = '<span style="color:var(--dim);font-family:var(--mono);font-size:.8rem">Haetaan<span class="dot-anim"></span></span>';
