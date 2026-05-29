@@ -14,11 +14,13 @@ load_dotenv("/opt/traficom-tracker/.env")
 
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from db import get_conn, init_db
 
 app  = FastAPI(title="Traficom Callsign Tracker")
 HTML = Path(__file__).parent / "templates" / "index.html"
+app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "templates")), name="static")
 
 
 def clean(obj):
