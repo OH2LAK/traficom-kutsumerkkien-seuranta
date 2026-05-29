@@ -9,6 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
+<style>
+@font-face {
+  font-family: 'pIqaD';
+  src: url('/static/font.woff') format('woff'),
+       url('/static/font.ttf') format('truetype');
+  font-weight: normal; font-style: normal;
+}
+</style>
 </head>
 <body>
 
@@ -335,6 +343,11 @@ async function doSearch() {
       ? `<div class="sr-row"><span class="sr-label">Tieto päivältä</span><span class="sr-value">${d.snapshot_date || '–'}</span></div>`
       : `<div class="sr-row"><span class="sr-label">Poistettu</span><span class="sr-value inactive">${d.removed_date || '–'}</span></div>`;
 
+    const firstSeenNote = d.first_seen
+      ? `<div class="sr-row"><span class="sr-label">Nähty 1. kerran</span><span class="sr-value">${d.first_seen}</span></div>
+         <div class="sr-note">⚠ Ensimmäinen havainto seurantadatassa. Kutsut jotka ovat olleet voimassa ennen seurannan alkua eivät välttämättä näy oikealla päivämäärällä.</div>`
+      : `<div class="sr-note">⚠ Ensimmäisen havainnon päivä ei ole tiedossa — kutsumerkki on ollut listalla ennen seurannan alkua.</div>`;
+
     let changesHtml = '';
     if (d.changes && d.changes.length) {
       const rows = d.changes.slice(0, 10).map(c => {
@@ -357,6 +370,7 @@ async function doSearch() {
       <div class="sr-callsign">${d.callsign}</div>
       <div class="sr-row"><span class="sr-label">Tila</span><span class="sr-value ${statusInfo.cls}">${statusInfo.text}</span></div>
       ${dateRow}
+      ${firstSeenNote}
       ${changesHtml}
     `;
   } catch(e) {
@@ -396,6 +410,97 @@ document.getElementById('logViewToggle').addEventListener('click', e => {
 
 
 /* ── Easter eggs ── */
+
+// pIqaD muunnostaulukko (latinalainen → pIqaD Unicode PUA)
+// Lähde: CSUR U+F8D0–U+F8FF
+const PIQAD = {
+  "A":"\uF8D0", "B":"\uF8D1", "CH":"\uF8D2", "D":"\uF8D3", "E":"\uF8D4",
+  "GH":"\uF8D5", "H":"\uF8D6", "I":"\uF8D7", "J":"\uF8D8", "L":"\uF8D9",
+  "M":"\uF8DA", "N":"\uF8DB", "NG":"\uF8DC", "O":"\uF8DD", "P":"\uF8DE",
+  "Q":"\uF8DF", "QH":"\uF8E0", "R":"\uF8E1", "S":"\uF8E2", "T":"\uF8E3",
+  "TLH":"\uF8E4", "U":"\uF8E5", "V":"\uF8E6", "W":"\uF8E7", "Y":"\uF8E8",
+  "TLHH":"\uF8E9",
+  "0":"\uF8F0", "1":"\uF8F1", "2":"\uF8F2", "3":"\uF8F3", "4":"\uF8F4",
+  "5":"\uF8F5", "6":"\uF8F6", "7":"\uF8F7", "8":"\uF8F8", "9":"\uF8F9",
+};
+
+function toPIqaD(text) {
+  let result = '';
+  let i = 0;
+  const t = text.toUpperCase();
+  while (i < t.length) {
+    // Kokeile 3-kirjaimiset ensin (TLH)
+    if (i+3 <= t.length && PIQAD[t.slice(i,i+3)]) {
+      result += PIQAD[t.slice(i,i+3)]; i+=3;
+    } else if (i+2 <= t.length && PIQAD[t.slice(i,i+2)]) {
+      result += PIQAD[t.slice(i,i+2)]; i+=2;
+    } else if (PIQAD[t[i]]) {
+      result += PIQAD[t[i]]; i++;
+    } else {
+      result += t[i]; i++;
+    }
+  }
+  return result;
+}
+
+let klingonActive = false;
+
+function klingonifyCallsigns() {
+  const CALLSIGN_RE2 = /\b(O[FGHIJ]\d[A-Z0-9]{1,4})\b/g;
+  document.querySelectorAll('body *:not(script):not(style):not(input):not(button):not(canvas)').forEach(el => {
+    Array.from(el.childNodes).forEach(node => {
+      if (node.nodeType !== Node.TEXT_NODE) return;
+      const text = node.textContent;
+      CALLSIGN_RE2.lastIndex = 0;
+      if (!CALLSIGN_RE2.test(text)) return;
+      CALLSIGN_RE2.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      while ((m = CALLSIGN_RE2.exec(text)) !== null) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement('span');
+        span.className = 'klingon-call';
+        span.title = m[1];
+        span.style.cssText = "font-family:'pIqaD',monospace;font-size:1.1em;color:var(--amber);text-shadow:0 0 10px rgba(255,204,68,.5);letter-spacing:.05em";
+        span.textContent = toPIqaD(m[1]);
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+}
+
+function deKlingonifyCallsigns() {
+  document.querySelectorAll('.klingon-call').forEach(el => {
+    el.replaceWith(document.createTextNode(el.title));
+  });
+}
+
+function activateKlingon() {
+  if (klingonActive) return;
+  klingonActive = true;
+  klingonifyCallsigns();
+  const banner = document.createElement('div');
+  banner.id = 'klingon-banner';
+  banner.style.cssText = "position:fixed;bottom:20px;right:20px;background:#1a0a00;color:var(--amber);" +
+    "font-family:'pIqaD',monospace;font-size:1.4rem;padding:12px 20px;border:1px solid var(--amber);" +
+    "z-index:99999;box-shadow:0 0 16px rgba(255,204,68,.4);letter-spacing:.1em";
+  banner.title = "nuqneH!";
+  banner.textContent = toPIqaD("NUQNEH");
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 3000);
+}
+
+function deactivateKlingon() {
+  if (!klingonActive) return;
+  klingonActive = false;
+  deKlingonifyCallsigns();
+  document.getElementById('klingon-banner')?.remove();
+}
+
+
 const MORSE = {
   A:'·-', B:'-···', C:'-·-·', D:'-··', E:'·', F:'··-·',
   G:'--·', H:'····', I:'··', J:'·---', K:'-·-', L:'·-··',
@@ -509,9 +614,15 @@ doSearch = async function() {
     else             { activateComic();   }
     return;
   }
+  if (q === 'KL1NGON') {
+    if (klingonActive) { deactivateKlingon(); }
+    else               { activateKlingon();   }
+    return;
+  }
   // Deaktivoi easter eggit normaalihaussa
-  if (morseActive) deactivateMorse();
-  if (comicActive) deactivateComic();
+  if (morseActive)   deactivateMorse();
+  if (comicActive)   deactivateComic();
+  if (klingonActive) deactivateKlingon();
   return _origDoSearch();
 };
 
