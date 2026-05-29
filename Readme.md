@@ -20,6 +20,9 @@ traficom-tracker/
 ├── .env.example
 └── templates/
     └── index.html      # Dashboard
+    └── style.css       # CSS settings
+    └── font.ttf        # Alternative font
+    └── font.woff       # Alternative font
 ```
 
 ## Asennus
