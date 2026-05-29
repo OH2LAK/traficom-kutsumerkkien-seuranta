@@ -164,7 +164,7 @@ def api_summary():
 # ---------------------------------------------------------------------------
 
 @app.get("/api/search")
-def api_search(q: str = Query(min_length=1, max_length=20)):
+def api_search(q: str = Query(min_length=3, max_length=12)):
     callsign = q.strip().upper()
     conn = get_conn()
     cur  = conn.cursor(dictionary=True)
