@@ -57,7 +57,9 @@ uvicorn app:app --host 0.0.0.0 --port 8099
 ```
 
 ## Cron
-
+ 
+Webserveri (systemd) pitää dashboardin käynnissä jatkuvasti, mutta se ei itse hae dataa Traficomilta. Tietojen päivitys tapahtuu erillisellä `fetcher.py`-skriptillä, joka ajetaan cronilla kerran vuorokaudessa klo 04:00. Fetcher hakee kutsumerkkilistan Traficomin palvelulta, tallentaa snapshotin tietokantaan ja laskee muutokset edelliseen päivään verrattuna.
+ 
 ```
 0 4 * * * cd /opt/traficom-tracker && /opt/traficom-tracker/venv/bin/python3 fetcher.py >> /var/log/traficom-fetcher.log 2>&1
 ```
