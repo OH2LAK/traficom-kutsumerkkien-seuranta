@@ -193,6 +193,19 @@ def api_search(q: str = Query(min_length=1, max_length=20)):
         (callsign,),
     )
     changes = cur.fetchall()
+
+    # First seen: vanhin merkintä muutoslokissa (lisäys tai poisto)
+    cur.execute(
+        """
+        SELECT MIN(change_date) AS first_seen
+        FROM daily_changes
+        WHERE callsign = %s
+        """,
+        (callsign,),
+    )
+    fs_row = cur.fetchone()
+    first_seen = clean(fs_row["first_seen"]) if fs_row and fs_row["first_seen"] else None
+
     cur.close()
     conn.close()
 
@@ -223,6 +236,7 @@ def api_search(q: str = Query(min_length=1, max_length=20)):
         "status":        status,
         "snapshot_date": snapshot_date,
         "removed_date":  removed_date,
+        "first_seen":    first_seen,
         "changes":       [clean(c) for c in changes],
     })
 
