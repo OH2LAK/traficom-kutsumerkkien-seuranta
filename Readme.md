@@ -13,8 +13,8 @@ Seuraa suomalaisten radioamatöörikutsujen (OF/OG/OH/OI/OJ) muutoksia Traficomi
 ```
 traficom-tracker/
 ├── app.py              # FastAPI-webserveri
-├── fetcher.py          # Hakee Traficomilta ja laskee diifit
-├── db.py               # MariaDB-yhteys ja skeema
+├── fetcher.py          # Hakee Traficomilta kutsumerkkilistan ja laskee päivittäiset erot
+├── db.py               # MariaDB-yhteys ja tietokantarakenne
 ├── requirements.txt
 ├── .env                # Ei repossa – katso .env.example
 ├── .env.example
